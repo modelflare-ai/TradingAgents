@@ -64,8 +64,8 @@ def test_401_names_the_key():
 def test_402_names_the_balance():
     text = explain_api_error(402, "payment required", MODEL)
     assert text is not None
-    assert "Insufficient Modelflare balance. Top up at https://modelflare.dev/dashboard" in text
-    assert "Modelflare 余额不足，请充值：https://modelflare.dev/dashboard" in text
+    assert "Insufficient Modelflare balance. Top up at https://modelflare.dev/wallet" in text
+    assert "Modelflare 余额不足，请充值：https://modelflare.dev/wallet" in text
 
 
 def test_403_model_not_found_names_the_group_not_the_balance():

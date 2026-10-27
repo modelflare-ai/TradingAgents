@@ -11,7 +11,7 @@ from urllib.parse import urlparse
 from urllib.request import Request, urlopen
 
 KEYS_URL = "https://modelflare.dev/keys"
-DASHBOARD_URL = "https://modelflare.dev/dashboard"
+WALLET_URL = "https://modelflare.dev/wallet"
 DEFAULT_BASE_URL = "https://modelflare.dev/v1"
 SIGNUP_URL = "http://modelflare.dev/sign-up?utm_source=github&utm_campaign=mf_TradingAgents"
 
@@ -71,8 +71,8 @@ def explain_api_error(status, message, model, base_url: str | None = None) -> st
     access = status in (403, 503) and _MODEL_ACCESS.search(text) is not None
     if status == 402 or (_BALANCE.search(text) is not None and not access):
         return (
-            f"Insufficient Modelflare balance. Top up at {DASHBOARD_URL}\n"
-            f"Modelflare 余额不足，请充值：{DASHBOARD_URL}"
+            f"Insufficient Modelflare balance. Top up at {WALLET_URL}\n"
+            f"Modelflare 余额不足，请充值：{WALLET_URL}"
         )
     if access:
         return (
