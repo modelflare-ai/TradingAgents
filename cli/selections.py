@@ -2,6 +2,7 @@
 
 import datetime
 import os
+import sys
 from pathlib import Path
 
 import typer
@@ -64,9 +65,10 @@ def unattended_gaps(flags) -> list[str]:
         gaps.append("TRADINGAGENTS_OUTPUT_LANGUAGE")
     if not depth_from_env():
         gaps.append("TRADINGAGENTS_MAX_DEBATE_ROUNDS and TRADINGAGENTS_MAX_RISK_ROUNDS")
-    if not env("TRADINGAGENTS_LLM_PROVIDER"):
+    modelflare_key = env("MODELFLARE_API_KEY") or env("MODELFLARE_KEY")
+    if not env("TRADINGAGENTS_LLM_PROVIDER") and not modelflare_key:
         gaps.append("TRADINGAGENTS_LLM_PROVIDER")
-    if not (env("TRADINGAGENTS_QUICK_THINK_LLM") or env("TRADINGAGENTS_DEEP_THINK_LLM")):
+    if not (env("TRADINGAGENTS_QUICK_THINK_LLM") or env("TRADINGAGENTS_DEEP_THINK_LLM")) and not modelflare_key:
         gaps.append("TRADINGAGENTS_QUICK_THINK_LLM or TRADINGAGENTS_DEEP_THINK_LLM")
     return gaps
 
@@ -251,10 +253,23 @@ def _prompt_selections(prefs, flags):
     # Step 6: LLM Provider (skipped when set via TRADINGAGENTS_LLM_PROVIDER).
     # The backend URL comes from TRADINGAGENTS_LLM_BACKEND_URL when set,
     # otherwise the provider's default endpoint — the same value the menu
-    # would have picked.
+    # would have picked. A headless run that already has a Modelflare key
+    # keeps the built-in provider instead of prompting with no terminal.
+    unattended = not (sys.stdin and sys.stdin.isatty())
+    modelflare_key = os.environ.get("MODELFLARE_API_KEY") or os.environ.get("MODELFLARE_KEY")
     provider_from_env = bool(os.environ.get("TRADINGAGENTS_LLM_PROVIDER"))
-    if provider_from_env:
-        selected_llm_provider = DEFAULT_CONFIG["llm_provider"].lower()
+    modelflare_unattended = (
+        unattended
+        and not provider_from_env
+        and bool(modelflare_key)
+        and DEFAULT_CONFIG["llm_provider"].lower() == "modelflare"
+    )
+    if provider_from_env or modelflare_unattended:
+        # Prefer the live variable; DEFAULT_CONFIG may predate it.
+        selected_llm_provider = (
+            os.environ["TRADINGAGENTS_LLM_PROVIDER"] if provider_from_env
+            else DEFAULT_CONFIG["llm_provider"]
+        ).lower()
         backend_url = resolve_backend_url(
             selected_llm_provider, env_url=DEFAULT_CONFIG["backend_url"]
         )
@@ -266,7 +281,9 @@ def _prompt_selections(prefs, flags):
                 "Step 6: LLM Provider", "Select your LLM provider"
             )
         )
-        selected_llm_provider, backend_url = select_llm_provider(prefs.get("llm_provider"))
+        selected_llm_provider, backend_url = select_llm_provider(
+            prefs.get("llm_provider") or DEFAULT_CONFIG["llm_provider"]
+        )
 
         # Providers with regional endpoints prompt for the region as a secondary
         # step so the main dropdown stays clean (mainland China and international
@@ -299,8 +316,13 @@ def _prompt_selections(prefs, flags):
 
     _check_tier_providers(selected_llm_provider, backend_url)
 
-    # Step 7: Thinking agents (skipped when either model is set via environment)
-    if os.environ.get("TRADINGAGENTS_QUICK_THINK_LLM") or os.environ.get("TRADINGAGENTS_DEEP_THINK_LLM"):
+    # Step 7: Thinking agents (skipped when either model is set via environment).
+    # Headless Modelflare runs use the built-in models when those variables are unset.
+    if (
+        os.environ.get("TRADINGAGENTS_QUICK_THINK_LLM")
+        or os.environ.get("TRADINGAGENTS_DEEP_THINK_LLM")
+        or (unattended and selected_llm_provider.lower() == "modelflare")
+    ):
         selected_shallow_thinker = DEFAULT_CONFIG["quick_think_llm"]
         selected_deep_thinker = DEFAULT_CONFIG["deep_think_llm"]
         console.print(
@@ -353,6 +375,18 @@ def _prompt_selections(prefs, flags):
             "Claude effort", "Step 8: Effort Level",
             "Configure Claude effort level", ask_anthropic_effort,
         )
+
+    # Interactive runs smoke here, after the prompts. Headless runs smoke once
+    # in cli.run, immediately before the graph, so this does not fire twice.
+    if selected_llm_provider.lower() == "modelflare" and not unattended:
+        from tradingagents.llm_clients.modelflare import smoke_test
+
+        result = smoke_test(selected_shallow_thinker, backend_url)
+        if result.ok:
+            console.print(f"[green]✓ {result.message}[/green]")
+        else:
+            console.print(f"[red]Modelflare connection failed: {result.message}[/red]")
+            raise typer.Exit(code=1)
 
     return {
         "ticker": selected_ticker,

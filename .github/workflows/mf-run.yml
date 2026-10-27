@@ -1,0 +1,57 @@
+name: mf-run
+
+on:
+  workflow_dispatch:
+    inputs:
+      ticker:
+        description: Ticker to analyze, for example NVDA
+        required: true
+        default: NVDA
+        type: string
+      date:
+        description: Analysis date YYYY-MM-DD; leave empty for today UTC
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install
+        run: pip install .
+      - name: Run analysis
+        env:
+          MODELFLARE_API_KEY: ${{ secrets.MODELFLARE_API_KEY }}
+          MF_TICKER: ${{ inputs.ticker }}
+          MF_DATE: ${{ inputs.date }}
+          TRADINGAGENTS_LLM_PROVIDER: modelflare
+          TRADINGAGENTS_QUICK_THINK_LLM: gpt-6-sol
+          TRADINGAGENTS_DEEP_THINK_LLM: gpt-6-sol
+          TRADINGAGENTS_OUTPUT_LANGUAGE: English
+          TRADINGAGENTS_MAX_DEBATE_ROUNDS: "1"
+          TRADINGAGENTS_MAX_RISK_ROUNDS: "1"
+          TRADINGAGENTS_RESULTS_DIR: ${{ github.workspace }}/results
+        run: |
+          set -eu
+          analysis_date="$MF_DATE"
+          if [ -z "$analysis_date" ]; then
+            analysis_date="$(date -u +%F)"
+          fi
+          tradingagents \
+            --ticker "$MF_TICKER" \
+            --date "$analysis_date" \
+            --analysts market,sentiment,news,fundamentals \
+            --save \
+            --no-show
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tradingagents-report-${{ inputs.ticker }}
+          path: results
+          if-no-files-found: error

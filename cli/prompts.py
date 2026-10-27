@@ -379,6 +379,7 @@ def _llm_provider_table() -> list[tuple[str, str, str | None]]:
     """
     ollama_url = os.environ.get("OLLAMA_BASE_URL") or "http://localhost:11434/v1"
     return [
+        ("Modelflare (GPT, Claude, Gemini via one key)", "modelflare", os.environ.get("MODELFLARE_BASE_URL") or "https://modelflare.dev/v1"),
         ("OpenAI", "openai", "https://api.openai.com/v1"),
         ("Google", "google", None),
         ("Anthropic", "anthropic", "https://api.anthropic.com/"),
@@ -705,6 +706,11 @@ def ensure_api_key(provider: str) -> str | None:
         return os.environ.get(env_var)
 
     existing = os.environ.get(env_var)
+    if provider.lower() == "modelflare" and not existing:
+        existing = os.environ.get("MODELFLARE_KEY")
+        if existing:
+            console.print("[yellow]Using legacy MODELFLARE_KEY; rename it to MODELFLARE_API_KEY when convenient.[/yellow]")
+            return existing
     if existing:
         return existing
 

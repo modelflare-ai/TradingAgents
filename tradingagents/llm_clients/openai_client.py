@@ -261,6 +261,9 @@ class ProviderSpec:
 # providers (qwen/glm/minimax) keep separate endpoints because international and
 # China accounts cannot share credentials (#758).
 OPENAI_COMPATIBLE_PROVIDERS: dict[str, ProviderSpec] = {
+    "modelflare":  ProviderSpec(
+        base_url="https://modelflare.dev/v1", base_url_env="MODELFLARE_BASE_URL"
+    ),
     "openai":     ProviderSpec(use_responses_api=True),
     "xai":        ProviderSpec(base_url="https://api.x.ai/v1"),
     "deepseek":   ProviderSpec(base_url="https://api.deepseek.com", chat_class=DeepSeekChatOpenAI),
@@ -372,6 +375,10 @@ class OpenAIClient(BaseLLMClient):
             # A signed-in provider sends its own credential, and only that.
             api_key_env = get_api_key_env(self.provider)
             api_key = os.environ.get(api_key_env) if api_key_env else None
+            # MODELFLARE_KEY was used by early fork builds; keep it as a
+            # read-only compatibility alias while documenting the new name.
+            if self.provider == "modelflare" and not api_key:
+                api_key = os.environ.get("MODELFLARE_KEY")
             if spec.credential is not None:
                 if "api_key" in self.kwargs:
                     raise ValueError(f"Provider '{self.provider}' uses its sign-in, not an api_key.")
@@ -392,6 +399,12 @@ class OpenAIClient(BaseLLMClient):
             # only speaks Chat Completions, so keep Responses off there (#1024).
             if spec.use_responses_api and _is_native_openai_base_url(base_url):
                 llm_kwargs["use_responses_api"] = True
+            elif self.provider == "modelflare":
+                # langchain-openai enables /v1/responses for gpt-6 tool calls
+                # unless this flag is explicit. Chat completions on Modelflare
+                # accept system messages and function tools; the responses
+                # route rejects system messages.
+                llm_kwargs["use_responses_api"] = False
         elif self.base_url:
             llm_kwargs["base_url"] = self.base_url
 

@@ -2,7 +2,11 @@ services:
   tradingagents:
     build: .
     env_file:
-      - .env
+      - path: .env
+        required: false
+    environment:
+      - MODELFLARE_API_KEY=${MODELFLARE_API_KEY:-}
+      - MODELFLARE_BASE_URL=${MODELFLARE_BASE_URL:-https://modelflare.dev/v1}
     volumes:
       - ${TRADINGAGENTS_DATA_DIR:-tradingagents_data}:/home/appuser/.tradingagents
     tty: true

@@ -106,11 +106,30 @@ def run_analysis(checkpoint: bool | None = None, portfolio=None, flags=None):
             console.print("[red]No terminal to answer the setup questions. Set:[/red]")
             for gap in gaps:
                 console.print(f"  {gap}")
+        # A Modelflare run with --ticker still needs a key, and must not prompt for one.
+        provider = (os.environ.get("TRADINGAGENTS_LLM_PROVIDER") or DEFAULT_CONFIG["llm_provider"]).lower()
+        if flags.get("ticker") and provider == "modelflare":
+            from tradingagents.llm_clients.modelflare import missing_key_message
+            note = missing_key_message()
+            if note:
+                console.print(f"[red]{note}[/red]")
+                gaps = [*gaps, note]
+        if gaps:
             raise typer.Exit(code=1)
 
     selections = get_user_selections(flags)
 
     config = _build_run_config(selections, checkpoint)
+    if flags.get("ticker") and not (sys.stdin and sys.stdin.isatty()):
+        from tradingagents.llm_clients.modelflare import unattended_smoke
+        smoked = unattended_smoke(
+            config.get("llm_provider"), config.get("backend_url"), config.get("quick_think_llm"),
+        )
+        if smoked is not None and not smoked.ok:
+            console.print(f"[red]{smoked.message}[/red]")
+            raise typer.Exit(code=1)
+        if smoked is not None:
+            console.print(f"[green]✓ {smoked.message}[/green]")
 
     stats_handler = StatsCallbackHandler()
 
@@ -186,7 +205,7 @@ def run_analysis(checkpoint: bool | None = None, portfolio=None, flags=None):
 
     # The alternate screen keeps a layout taller than the window from redrawing
     # by scrolling; the final report prints after this block, on the normal screen.
-    with Live(layout, refresh_per_second=4, screen=True):
+    with Live(layout, refresh_per_second=4, screen=True) as live:
         # Initial display
         update_display(layout, stats_handler=stats_handler, start_time=start_time)
 
@@ -354,6 +373,16 @@ def run_analysis(checkpoint: bool | None = None, portfolio=None, flags=None):
             graph.clear_checkpoint_on_success(
                 selections["ticker"], selections["analysis_date"], selections["asset_type"], portfolio
             )
+        except Exception as exc:
+            from tradingagents.llm_clients.modelflare import explain_run_exception
+            text = explain_run_exception(
+                exc, config.get("llm_provider"), config.get("backend_url"), config.get("quick_think_llm"),
+            )
+            if not text:
+                raise
+            live.stop()
+            console.print(text, style="red")
+            raise typer.Exit(code=1) from None
         finally:
             # Always restore the plain uncheckpointed graph, even on failure.
             graph.end_checkpoint()

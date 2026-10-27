@@ -94,6 +94,26 @@ _MINIMAX_MODELS: dict[str, list[ModelOption]] = {
 
 
 MODEL_OPTIONS: ProviderModeOptions = {
+    "modelflare": {
+        "quick": [
+            ("GPT-6 Sol - Modelflare default", "gpt-6-sol"),
+            ("GPT-6 Astra - Stronger reasoning", "gpt-6-astra"),
+            ("Claude Sonnet 5 - Strong Claude option", "claude-sonnet-5"),
+            ("Claude Opus 5.5 - Frontier Claude option", "claude-opus-5-5"),
+            ("Gemini 3.1 Pro - Strong Gemini option", "gemini-3.1-pro-preview"),
+            ("Grok 4.7 - Strong Grok option", "grok-4.7"),
+            ("Custom model ID", "custom"),
+        ],
+        "deep": [
+            ("GPT-6 Sol - Modelflare default", "gpt-6-sol"),
+            ("GPT-6 Astra - Stronger reasoning", "gpt-6-astra"),
+            ("Claude Sonnet 5 - Strong Claude option", "claude-sonnet-5"),
+            ("Claude Opus 5.5 - Frontier Claude option", "claude-opus-5-5"),
+            ("Gemini 3.1 Pro - Strong Gemini option", "gemini-3.1-pro-preview"),
+            ("Grok 4.7 - Strong Grok option", "grok-4.7"),
+            ("Custom model ID", "custom"),
+        ],
+    },
     "openai": {
         "quick": [
             ("GPT-6 Luna - Fast, high-volume and cost-efficient", "gpt-6-luna"),

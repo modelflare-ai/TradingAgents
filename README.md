@@ -1,3 +1,38 @@
+<!-- MF-START -->
+<p align="center"><a href="http://modelflare.dev/sign-up?utm_source=github&utm_campaign=mf_TradingAgents"><img src="https://github.com/tbphp/gpt-load/raw/main/screenshot/modelflare-banner-en.png" alt="Modelflare"></a></p>
+
+# TradingAgents · Modelflare Edition
+
+> This is the Modelflare Edition of TradingAgents: models are pre-configured, just add one Modelflare API key. [Get your key](http://modelflare.dev/sign-up?utm_source=github&utm_campaign=mf_TradingAgents)
+
+Modelflare is operated by Havenbyte LLC (USA). It supports mainstream models such as GPT, Claude, Gemini, and Grok, along with common compatible protocols, plus 40+ image and video models. API keys support ordered fallback: one API key can call multiple models, keys can be assigned backup groups, and request logs show status, latency, tokens, and actual cost.
+
+Cache compensation is another highlight: selected OpenAI Price-First, Stable, and Premium groups guarantee daily cache hit rates of 65%, 75%, and 85% respectively. For eligible API requests that fall short of the guaranteed hit rate, the platform provides corresponding compensation.
+
+There is also a first top-up promotion: a single top-up of US$20 unlocks the 0.015x GPT promo group, where GPT-5.6-Sol costs about ¥0.51 (input) / ¥3.01 (output) per million tokens, with no usage cap. A single top-up of US$50 unlocks the 0.03x Claude promo group.
+
+---
+
+Modelflare站点是由美国 Havenbyte LLC 运营，支持 GPT、Claude、Gemini、Grok 等主流模型和常用兼容协议，同时也支持 40 多种图片及视频模型。API Key 可以配置有序回退，一把 API Key 可以调用多个模型，Key 还可以设置备用分组，并且从请求日志里能看到状态、延迟、Token 和实际费用。
+
+缓存补偿是这个站的另一个亮点：部分 OpenAI 价格优先、稳定和高级分组分别提供每日 65%、75%、85% 的缓存命中率保障，对于符合条件的api请求如果未达到缓存命中率，平台会给予对应补充。
+
+站点目前也有首次充值解锁特惠分组的活动，单笔充值 US$20 后可解锁 0.015 倍率 GPT 特惠分组，解锁后 GPT-5.6-Sol 的价格大约是 ¥0.51（输入）/ ¥3.01（输出）/每百万 Token，并且没有使用上限限制。单笔充值 US$50 后可解锁 0.03 倍率 Claude 特惠分组。
+
+## Quick Start / 快速开始
+1. [Sign up and get an API key / 注册并获取 API Key](http://modelflare.dev/sign-up?utm_source=github&utm_campaign=mf_TradingAgents)
+2. One-click deploy / 一键部署：`echo "MODELFLARE_API_KEY=sk-xxx" > .env && docker compose run --rm tradingagents`
+3. Paste the key and run your first analysis / 填入 Key，跑第一次分析；默认模型为 `gpt-6-sol`，启动时会自动发起最小测试调用。
+
+![NVDA analysis on gpt-6-sol](assets/mf-edition/nvda.png)
+
+<!-- MF-SCREENSHOT -->
+
+Based on [TradingAgents](https://github.com/TauricResearch/TradingAgents). Thanks to the original authors. / 基于 TradingAgents，感谢原作者。
+
+---
+<!-- MF-END -->
+
 <p align="center">
   <img src="tradingagents/assets/tauric-logo.svg" width="60%" alt="Tauric Research">
 </p>
